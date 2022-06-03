@@ -2,6 +2,8 @@
 using Project.Infrastructure.Common;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 
 namespace Project.Services
@@ -17,10 +19,18 @@ namespace Project.Services
 
         public async Task AddAsync(LostProperty lostProperty)
         {
-            if (!string.IsNullOrEmpty(lostProperty.EmployeeId))
+            if (!string.IsNullOrWhiteSpace(lostProperty.EmployeeId))
             {
-                var employee = await _unitOfWork.EmployeeRepository.GetByIdAsync(lostProperty.Id);
-                if (employee == null)
+                var employee = await _unitOfWork.EmployeeRepository.GetByIdAsync(lostProperty.EmployeeId);
+                if (employee is null)
+                {
+                    throw new ArgumentNullException(nameof(lostProperty.EmployeeId));
+                }
+            }
+            if (lostProperty.LocationId != null)
+            {
+                var location = await _unitOfWork.LocationRepository.GetByIdAsync(lostProperty.LocationId);
+                if (location is null)
                 {
                     throw new ArgumentNullException(nameof(lostProperty.EmployeeId));
                 }
@@ -44,9 +54,21 @@ namespace Project.Services
             _unitOfWork.Dispose();
         }
 
-        public async Task<IEnumerable<LostProperty>> GetAllAsync()
+        public async Task<IEnumerable<LostProperty>> GetAllAsync(
+           int pageIndex = 1,
+           int pageSize = 10,
+           Expression<Func<LostProperty, bool>> filter = null,
+           Func<IQueryable<LostProperty>, IOrderedQueryable<LostProperty>> orderBy = null,
+           string includeProperties = "",
+           bool isDelete = false)
         {
-            return await _unitOfWork.LostPropertyRepository.GetAsync();
+            return await _unitOfWork.LostPropertyRepository.GetWithPaginationAsync(
+                pageIndex,
+                pageSize,
+                filter,
+                orderBy,
+                includeProperties,
+                isDelete);
         }
 
         public async Task<LostProperty> GetByIdAsync(int id)
@@ -56,10 +78,18 @@ namespace Project.Services
 
         public async Task UpdateAsync(LostProperty lostProperty)
         {
-            if (!string.IsNullOrEmpty(lostProperty.EmployeeId))
+            if (!string.IsNullOrWhiteSpace(lostProperty.EmployeeId))
             {
-                var employee = await _unitOfWork.EmployeeRepository.GetByIdAsync(lostProperty.Id);
-                if (employee == null)
+                var employee = await _unitOfWork.EmployeeRepository.GetByIdAsync(lostProperty.EmployeeId);
+                if (employee is null)
+                {
+                    throw new ArgumentNullException(nameof(lostProperty.EmployeeId));
+                }
+            }
+            if (lostProperty.LocationId != null)
+            {
+                var location = await _unitOfWork.LocationRepository.GetByIdAsync(lostProperty.LocationId);
+                if (location is null)
                 {
                     throw new ArgumentNullException(nameof(lostProperty.EmployeeId));
                 }

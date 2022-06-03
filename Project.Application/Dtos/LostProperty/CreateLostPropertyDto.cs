@@ -1,8 +1,9 @@
 ﻿using Project.Core.Common.Enum;
+using Project.Core.Validations;
 using System;
 using System.ComponentModel.DataAnnotations;
 
-namespace Project.Application.Dtos.LostProperties
+namespace Project.Application.Dtos.LostProperty
 {
     public class CreateLostPropertyDto
     {
@@ -13,8 +14,8 @@ namespace Project.Application.Dtos.LostProperties
         [MaxLength(1000)]
         public string Description { get; set; }
         public PropertyStatus Status { get; set; }
-        [MaxLength(500)]
-        public string? Location { get; set; }
+        [ValidId]
+        public int? LocationId { get; set; }
         [DataType(DataType.DateTime)]
         public DateTime? FoundTime { get; set; }
         public string? EmployeeId { get; set; }

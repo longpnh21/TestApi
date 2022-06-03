@@ -18,6 +18,7 @@ namespace Project.Infrastructure
 
         public DbSet<Employee> Employees { get; set; }
         public DbSet<LostProperty> LostProperties { get; set; }
+        public DbSet<Location> Locations { get; set; }
 
         public void MarkAsModified(object item)
         {
@@ -31,7 +32,7 @@ namespace Project.Infrastructure
 
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = new CancellationToken())
         {
-            foreach (Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry<ICreationTime>? entry in ChangeTracker.Entries<ICreationTime>())
+            foreach (var entry in ChangeTracker.Entries<ICreationTime>())
             {
                 if (entry.State == EntityState.Added)
                 {
@@ -39,7 +40,7 @@ namespace Project.Infrastructure
                 }
             }
 
-            foreach (Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry<IModificationTime>? entry in ChangeTracker.Entries<IModificationTime>())
+            foreach (var entry in ChangeTracker.Entries<IModificationTime>())
             {
                 if (entry.State == EntityState.Modified)
                 {
@@ -47,7 +48,7 @@ namespace Project.Infrastructure
                 }
             }
 
-            foreach (Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry<ISoftDelete>? entry in ChangeTracker.Entries<ISoftDelete>())
+            foreach (var entry in ChangeTracker.Entries<ISoftDelete>())
             {
                 if (entry.State == EntityState.Deleted)
                 {

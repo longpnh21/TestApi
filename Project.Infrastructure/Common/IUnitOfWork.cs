@@ -7,7 +7,7 @@ namespace Project.Infrastructure.Common
     {
         IEmployeeRepository EmployeeRepository { get; }
         ILostPropertyRepository LostPropertyRepository { get; }
-
+        ILocationRepository LocationRepository { get; }
         void Dispose();
         Task SaveAsync();
     }

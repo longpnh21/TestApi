@@ -7,19 +7,19 @@ using System.Threading.Tasks;
 
 namespace Project.Services
 {
-    public interface ILostPropertyService
+    public interface ILocationService
     {
-        Task AddAsync(LostProperty lostProperty);
+        Task AddAsync(Location lostProperty);
         Task DeleteAsync(int id);
-        Task<IEnumerable<LostProperty>> GetAllAsync(
+        Task<IEnumerable<Location>> GetAllAsync(
            int pageIndex = 1,
            int pageSize = 10,
-           Expression<Func<LostProperty, bool>> filter = null,
-           Func<IQueryable<LostProperty>, IOrderedQueryable<LostProperty>> orderBy = null,
+           Expression<Func<Location, bool>> filter = null,
+           Func<IQueryable<Location>, IOrderedQueryable<Location>> orderBy = null,
            string includeProperties = "",
            bool isDelete = false);
-        Task<LostProperty> GetByIdAsync(int id);
+        Task<Location> GetByIdAsync(int id);
         Task HardDeleteAsync(int id);
-        Task UpdateAsync(LostProperty lostProperty);
+        Task UpdateAsync(Location lostProperty);
     }
 }

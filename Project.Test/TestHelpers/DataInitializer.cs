@@ -64,7 +64,6 @@ namespace Project.Test.TestHelpers
                     Name = "Asus charger",
                     Description = "risus quis diam luctus lobortis. Class",
                     Status = PropertyStatus.Lost,
-                    Location = "est ac mattis",
                     FoundTime = DateTime.Parse("2021-12-09"),
                     EmployeeId = "7C39DD64-4643-B552-1213-1243D9F5D643"
                 },
@@ -73,7 +72,6 @@ namespace Project.Test.TestHelpers
                     Name = "KMS employee mug",
                     Description = "semper cursus. Integer mollis. Integer tincidunt aliquam",
                     Status = PropertyStatus.Lost,
-                    Location = "Pellentesque ut",
                     FoundTime = DateTime.Parse("2023-03-01"),
                     EmployeeId = null
                 },
@@ -82,7 +80,6 @@ namespace Project.Test.TestHelpers
                     Name = "Airpod 2",
                     Description = "dis parturient montes, nascetur ridiculus mus.",
                     Status = PropertyStatus.Found,
-                    Location = "aliquet libero.",
                     FoundTime = DateTime.Parse("2021-06-08"),
                     EmployeeId = null
                 },
@@ -91,7 +88,6 @@ namespace Project.Test.TestHelpers
                     Name = "Logitech mouse G102",
                     Description = "velit eu sem. Pellentesque ut ipsum",
                     Status = PropertyStatus.Found,
-                    Location = "et arcu imperdiet",
                     FoundTime = DateTime.Parse("2022-02-25"),
                     EmployeeId = "7C39DD64-4643-B552-1213-1243D9F5D643"
                 },
@@ -100,12 +96,105 @@ namespace Project.Test.TestHelpers
                     Name = "KMS ID Badge",
                     Description = "Nulla facilisis. Suspendisse commodo tincidunt nibh. Phasellus",
                     Status = PropertyStatus.Return,
-                    Location = "elit, pellentesque a,",
                     FoundTime = DateTime.Parse("2022-06-06"),
                     EmployeeId = "99EBC81B-E423-D78A-B833-2CFDD8C28DA1"
                 }
             };
             return lostProperties;
+        }
+
+        public static List<Location> GetAllLocations()
+        {
+            var locations = new List<Location>
+            {
+                new Location {
+                    Floor = 1,
+                    Cube = "Kobiton"
+                },
+                new Location {
+                    Floor = 3,
+                    Cube = "It"
+                },
+                new Location {
+                    Floor = 3,
+                    Cube = "Security"
+                },
+                new Location {
+                    Floor = 3,
+                    Cube = "KMS Solutions"
+                },
+                new Location {
+                    Floor = 3,
+                    Cube = "Apollo"
+                },
+                new Location {
+                    Floor = 4,
+                    Cube = "Discuss Area"
+                },
+                new Location {
+                    Floor = 5,
+                    Cube = "Visily"
+                },
+                new Location {
+                    Floor = 5,
+                    Cube = "Grove"
+                },
+                new Location {
+                    Floor = 5,
+                    Cube = "Discuss Area"
+                },
+                new Location {
+                    Floor = 6,
+                    Cube = "LeaseQuery"
+                },
+                new Location {
+                    Floor = 6,
+                    Cube = "Driverse"
+                },
+                new Location {
+                    Floor = 6,
+                    Cube = "Editshare"
+                },
+                new Location {
+                    Floor = 6,
+                    Cube = "Lightspeed"
+                },
+                new Location {
+                    Floor = 6,
+                    Cube = "APAC"
+                },
+                new Location {
+                    Floor = 6,
+                    Cube = "Conexiom/Kibo"
+                },
+                new Location {
+                    Floor = 6,
+                    Cube = "APAC"
+                },
+                new Location {
+                    Floor = 6,
+                    Cube = "Discuss Area"
+                },
+                new Location {
+                    Floor = 7,
+                    Cube = "HR - TA"
+                },
+                new Location {
+                    Floor = 7,
+                    Cube = "HRBR"
+                },
+                new Location {
+                    Floor = 7,
+                    Cube = "Relax Room"
+                },
+            };
+            int id = 0;
+            foreach (var location in locations)
+            {
+                location.Id = id;
+                id++;
+            }
+            return locations;
         }
     }
 }

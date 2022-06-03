@@ -9,6 +9,7 @@ namespace Project.Infrastructure.Common
         private readonly IApplicationDbContext _context;
         private IEmployeeRepository _employeeRepository;
         private ILostPropertyRepository _lostPropertyRepository;
+        private ILocationRepository _locationRepository;
 
         public UnitOfWork(IApplicationDbContext context)
         {
@@ -41,9 +42,22 @@ namespace Project.Infrastructure.Common
             }
         }
 
+        public ILocationRepository LocationRepository
+        {
+            get
+            {
+
+                if (_locationRepository is null)
+                {
+                    _locationRepository = new LocationRepository(_context);
+                }
+                return _locationRepository;
+            }
+        }
+
         public async Task SaveAsync()
         {
-            _ = await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync();
         }
 
         private bool disposed = false;

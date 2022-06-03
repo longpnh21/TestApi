@@ -1,5 +1,8 @@
 ﻿using Project.Core.Entities;
+using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 
 namespace Project.Services
@@ -11,6 +14,12 @@ namespace Project.Services
         Task<Employee> GetByIdAsync(string id);
         Task DeleteAsync(string id);
         Task HardDeleteAsync(string id);
-        Task<IEnumerable<Employee>> GetAllAsync();
+        Task<IEnumerable<Employee>> GetAsync(
+           int pageIndex = 1,
+           int pageSize = 10,
+           Expression<Func<Employee, bool>> filter = null,
+           Func<IQueryable<Employee>, IOrderedQueryable<Employee>> orderBy = null,
+           string includeProperties = "",
+           bool isDelete = false);
     }
 }

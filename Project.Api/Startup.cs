@@ -34,9 +34,11 @@ namespace Project.Api
 
             services.AddScoped<IEmployeeRepository, EmployeeRepository>();
             services.AddScoped<ILostPropertyRepository, LostPropertyRepository>();
+            services.AddScoped<ILocationRepository, LocationRepository>();
 
             services.AddScoped<IEmployeeService, EmployeeService>();
             services.AddScoped<ILostPropertyService, LostPropertyService>();
+            services.AddScoped<ILocationService, LocationService>();
 
             services.AddAutoMapper(typeof(ApplicationProfile).Assembly);
 

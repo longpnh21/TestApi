@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Project.Application.Dtos.Employee;
-using Project.Application.Dtos.LostProperties;
+using Project.Application.Dtos.Location;
+using Project.Application.Dtos.LostProperty;
 using Project.Core.Entities;
 
 namespace Project.Application.AutoMapper
@@ -16,6 +17,10 @@ namespace Project.Application.AutoMapper
             CreateMap<LostPropertyDto, LostProperty>().ReverseMap();
             CreateMap<CreateLostPropertyDto, LostProperty>();
             CreateMap<UpdateLostPropertyDto, LostProperty>();
+
+            CreateMap<LocationDto, Location>().ReverseMap();
+            CreateMap<CreateLocationDto, Location>();
+            CreateMap<UpdateLocationDto, Location>();
         }
     }
 }

@@ -9,10 +9,19 @@ namespace Project.Infrastructure.Common
 {
     public interface IRepository<TEntity> where TEntity : BaseEntity
     {
-        Task<IEnumerable<TEntity>> GetAsync(
+        Task<IEnumerable<TEntity>> GetWithPaginationAsync(
+           int pageIndex = 1,
+           int pageSize = 10,
            Expression<Func<TEntity, bool>> filter = null,
            Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderBy = null,
-           string includeProperties = "");
+           string includeProperties = "",
+           bool isDelete = false);
+
+        Task<IEnumerable<TEntity>> GetAllAsync(
+           Expression<Func<TEntity, bool>> filter = null,
+           Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderBy = null,
+           string includeProperties = "",
+           bool isDelete = false);
 
         Task<TEntity> GetByIdAsync(object id);
 

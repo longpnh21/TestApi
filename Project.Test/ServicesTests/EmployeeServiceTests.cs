@@ -1,4 +1,5 @@
-﻿using Moq;
+﻿using Microsoft.EntityFrameworkCore;
+using Moq;
 using NUnit.Framework;
 using Project.Core.Entities;
 using Project.Infrastructure.Common;
@@ -11,9 +12,10 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 
-namespace Project.Test.ServicesTest
+namespace Project.Tests.ServicesTests
 {
-    public class EmployeeServiceTest
+    [TestFixture]
+    public class EmployeeServiceTests
     {
         #region Variables
         private IEmployeeService _employeeService;
@@ -53,10 +55,11 @@ namespace Project.Test.ServicesTest
 
         #region Unit Tests
         [Test]
-        public async Task GetAllAsync_ReturnCollection()
+        [TestCase(1, 2)]
+        public async Task GetAllAsync_ReturnCollection(int pageIndex, int pageSize)
         {
-            var employees = await _employeeService.GetAllAsync();
-            CollectionAssert.AreEqual(employees, _employees);
+            var employees = await _employeeService.GetAsync(pageIndex, pageSize);
+            CollectionAssert.AreEqual(employees, _employees.Skip((pageIndex - 1) * pageSize).Take(pageSize));
         }
 
         [Test]
@@ -117,60 +120,75 @@ namespace Project.Test.ServicesTest
             };
 
             await _employeeService.UpdateAsync(updatedEmployee);
-            var changedEmployee = _employees.Find(x => x.Id == employee.Id);
-            Assert.True(changedEmployee.FirstName.Equals("Update")
-                && changedEmployee.LastName.Equals("Test"));
+            var changedEmployee = _employees.FirstOrDefault(x => x.Id == employee.Id);
+            Assert.True(changedEmployee.FirstName == "Update"
+                && changedEmployee.LastName == "Test");
         }
 
         [Test]
-        public async Task DeleteAsync()
+        [TestCase("EA2E7616-1428-2E6E-9858-136E89E456C9")]
+        public async Task DeleteAsync(string id)
         {
-            var employee = new Employee
-            {
-                Id = "EA2E7616-1428-2E6E-9858-136E89E456C9",
-                FirstName = "Galvin",
-                LastName = "Carlson",
-                Phone = "120-2165",
-                Email = "convallis.est@protonmail.couk",
-                DateOfBirth = DateTime.Parse("1934-08-25")
-            };
 
-            await _employeeService.DeleteAsync(employee.Id);
-            var deletedEmployee = _employees.Find(x => x.Id == employee.Id);
+            await _employeeService.DeleteAsync(id);
+            var deletedEmployee = _employees.FirstOrDefault(x => x.Id == id);
             Assert.True(deletedEmployee.IsDelete);
         }
 
         [Test]
-        public async Task HardDeleteAsync()
+        [TestCase("7C39DD64-4643-B552-1213-1243D9F5D643")]
+        public async Task HardDeleteAsync(string id)
         {
-            var employee = new Employee
-            {
-                Id = "EA2E7616-1428-2E6E-9858-136E89E456C9",
-                FirstName = "Galvin",
-                LastName = "Carlson",
-                Phone = "120-2165",
-                Email = "convallis.est@protonmail.couk",
-                DateOfBirth = DateTime.Parse("1934-08-25")
-            };
 
-            var preDeletedEmployee = _employees.Find(e => e.Id == employee.Id);
-            await _employeeService.HardDeleteAsync(employee.Id);
-            var deletedEmployee = _employees.Find(x => x.Id == employee.Id);
-            Assert.True((preDeletedEmployee != null)
-                && (deletedEmployee == null));
+            var preDeletedEmployee = _employees.FirstOrDefault(e => e.Id == id);
+            await _employeeService.HardDeleteAsync(id);
+            var deletedEmployee = _employees.FirstOrDefault(x => x.Id == id);
+            Assert.True((preDeletedEmployee is not null)
+                && (deletedEmployee is null));
         }
         #endregion
 
         #region Private member methods
-
-
         private ILostPropertyRepository SetUpLostPropertyRepository()
         {
             var mockRepo = new Mock<LostPropertyRepository>(MockBehavior.Default, _applicationDbContext);
-            mockRepo.Setup(x => x.GetAsync(It.IsAny<Expression<Func<LostProperty, bool>>>()
-                , It.IsAny<Func<IQueryable<LostProperty>, IOrderedQueryable<LostProperty>>>()
-                , It.IsAny<string>()))
-                .ReturnsAsync(_lostProperties);
+
+            mockRepo.Setup(x => x.GetAllAsync(
+                It.IsAny<Expression<Func<LostProperty, bool>>>(),
+                It.IsAny<Func<IQueryable<LostProperty>, IOrderedQueryable<LostProperty>>>(),
+                It.IsAny<string>(),
+                It.IsAny<bool>()))
+                .ReturnsAsync(
+                    (Expression<Func<LostProperty, bool>> filter,
+                    Func<IQueryable<LostProperty>, IOrderedQueryable<LostProperty>> orderBy,
+                    string includeProperties,
+                    bool isDelete
+                    ) =>
+                    {
+                        var query = _lostProperties.AsQueryable();
+
+                        if (!isDelete)
+                        {
+                            query = query.Where(e => !e.IsDelete);
+                        }
+
+                        if (filter is not null)
+                        {
+                            query = query.Where(filter);
+                        }
+
+                        foreach (string includeProperty in includeProperties.Split
+                            (new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
+                        {
+                            query = query.Include(includeProperty);
+                        }
+
+                        return orderBy is not null
+                            ? orderBy(query)
+                            : (IEnumerable<LostProperty>)query;
+                    }
+                );
+
 
             mockRepo.Setup(x => x.HardDeleteAsync(It.IsAny<IEnumerable<LostProperty>>()))
                 .Callback(new Action<IEnumerable<LostProperty>>(propertiesToDelete =>
@@ -189,13 +207,52 @@ namespace Project.Test.ServicesTest
         {
             var mockRepo = new Mock<EmployeeRepository>(MockBehavior.Default, _applicationDbContext);
 
-            mockRepo.Setup(x => x.GetAsync(It.IsAny<Expression<Func<Employee, bool>>>()
-                , It.IsAny<Func<IQueryable<Employee>, IOrderedQueryable<Employee>>>()
-                , It.IsAny<string>()))
-                .ReturnsAsync(_employees);
+            mockRepo.Setup(x => x.GetWithPaginationAsync(
+                It.IsAny<int>(),
+                It.IsAny<int>(),
+                It.IsAny<Expression<Func<Employee, bool>>>(),
+                It.IsAny<Func<IQueryable<Employee>, IOrderedQueryable<Employee>>>(),
+                It.IsAny<string>(),
+                It.IsAny<bool>()))
+                .ReturnsAsync(
+                    (int pageIndex,
+                    int pageSize,
+                    Expression<Func<Employee, bool>> filter,
+                    Func<IQueryable<Employee>, IOrderedQueryable<Employee>> orderBy,
+                    string includeProperties,
+                    bool isDelete
+                    ) =>
+                    {
+                        var query = _employees.AsQueryable();
+
+                        if (!isDelete)
+                        {
+                            query = query.Where(e => !e.IsDelete);
+                        }
+
+                        if (filter is not null)
+                        {
+                            query = query.Where(filter);
+                        }
+
+                        foreach (string includeProperty in includeProperties.Split
+                            (new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
+                        {
+                            query = query.Include(includeProperty);
+                        }
+
+                        return orderBy is not null
+                            ? orderBy(query)
+                                .Skip((pageIndex - 1) * pageSize)
+                                .Take(pageSize).ToList()
+                            : (IEnumerable<Employee>)query
+                                .Skip((pageIndex - 1) * pageSize)
+                                .Take(pageSize).ToList();
+                    }
+                );
 
             mockRepo.Setup(x => x.GetByIdAsync(It.IsAny<string>()))
-                .ReturnsAsync(new Func<string, Employee>(id => _employees.Find(e => e.Id.Equals(id))));
+                .ReturnsAsync(new Func<string, Employee>(id => _employees.FirstOrDefault(e => e.Id == id)));
 
             mockRepo.Setup(p => p.InsertAsync((It.IsAny<Employee>())))
                 .Callback(new Action<Employee>(newEmployee =>
@@ -208,7 +265,7 @@ namespace Project.Test.ServicesTest
             mockRepo.Setup(x => x.UpdateAsync(It.IsAny<Employee>()))
                 .Callback(new Action<Employee>(emp =>
                    {
-                       int oldEmployee = _employees.FindIndex(e => e.Id.Equals(emp.Id));
+                       int oldEmployee = _employees.FindIndex(e => e.Id == emp.Id);
                        _employees[oldEmployee] = emp;
                    }));
 
@@ -216,8 +273,8 @@ namespace Project.Test.ServicesTest
                 .Callback((object empId) =>
                 {
                     string id = empId.ToString();
-                    var employeeToRemove = _employees.Find(e => e.Id.Equals(empId));
-                    if (employeeToRemove != null)
+                    var employeeToRemove = _employees.FirstOrDefault(e => e.Id == id);
+                    if (employeeToRemove is not null)
                     {
                         employeeToRemove.IsDelete = true;
                     }
@@ -227,8 +284,8 @@ namespace Project.Test.ServicesTest
             mockRepo.Setup(x => x.DeleteAsync(It.IsAny<Employee>()))
                 .Callback(new Action<Employee>(emp =>
                 {
-                    var employeeToRemove = _employees.Find(e => e.Id.Equals(emp.Id));
-                    if (employeeToRemove != null)
+                    var employeeToRemove = _employees.FirstOrDefault(e => e.Id == emp.Id);
+                    if (employeeToRemove is not null)
                     {
                         employeeToRemove.IsDelete = true;
                     }
@@ -238,8 +295,8 @@ namespace Project.Test.ServicesTest
                 .Callback((object empId) =>
                 {
                     string id = empId.ToString();
-                    var employeeToRemove = _employees.Find(e => e.Id.Equals(id));
-                    if (employeeToRemove != null)
+                    var employeeToRemove = _employees.FirstOrDefault(e => e.Id == id);
+                    if (employeeToRemove is not null)
                     {
                         _employees.Remove(employeeToRemove);
                     }
@@ -248,8 +305,8 @@ namespace Project.Test.ServicesTest
             mockRepo.Setup(x => x.HardDeleteAsync(It.IsAny<Employee>()))
                 .Callback(new Action<Employee>(emp =>
                 {
-                    var employeeToRemove = _employees.Find(e => e.Id.Equals(emp.Id));
-                    if (employeeToRemove != null)
+                    var employeeToRemove = _employees.FirstOrDefault(e => e.Id == emp.Id);
+                    if (employeeToRemove is not null)
                     {
                         _employees.Remove(employeeToRemove);
                     }
@@ -266,7 +323,7 @@ namespace Project.Test.ServicesTest
             _employeeService = null;
             _unitOfWork = null;
             _employeeRepository = null;
-            if (_applicationDbContext != null)
+            if (_applicationDbContext is not null)
             {
                 _applicationDbContext.Dispose();
             }

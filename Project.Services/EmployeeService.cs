@@ -1,6 +1,9 @@
 ﻿using Project.Core.Entities;
 using Project.Infrastructure.Common;
+using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 
 namespace Project.Services
@@ -30,8 +33,8 @@ namespace Project.Services
 
         public async Task HardDeleteAsync(string id)
         {
-            var employeeLostProperties = await _unitOfWork.LostPropertyRepository.GetAsync(e => e.EmployeeId.Equals(id));
-            if (employeeLostProperties != null)
+            var employeeLostProperties = await _unitOfWork.LostPropertyRepository.GetAllAsync(filter: e => e.EmployeeId == id);
+            if (employeeLostProperties is not null)
             {
                 await _unitOfWork.LostPropertyRepository.HardDeleteAsync(employeeLostProperties);
             }
@@ -40,9 +43,21 @@ namespace Project.Services
             _unitOfWork.Dispose();
         }
 
-        public async Task<IEnumerable<Employee>> GetAllAsync()
+        public async Task<IEnumerable<Employee>> GetAsync(
+           int pageIndex = 1,
+           int pageSize = 10,
+           Expression<Func<Employee, bool>> filter = null,
+           Func<IQueryable<Employee>, IOrderedQueryable<Employee>> orderBy = null,
+           string includeProperties = "",
+           bool isDelete = false)
         {
-            return await _unitOfWork.EmployeeRepository.GetAsync();
+            return await _unitOfWork.EmployeeRepository.GetWithPaginationAsync(
+                pageIndex,
+                pageSize,
+                filter,
+                orderBy,
+                includeProperties,
+                isDelete);
         }
 
         public async Task<Employee> GetByIdAsync(string id)

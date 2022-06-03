@@ -19,14 +19,22 @@ namespace Project.Infrastructure.Common
             _context = context;
         }
 
-        public virtual async Task<IEnumerable<TEntity>> GetAsync(
+        public virtual async Task<IEnumerable<TEntity>> GetWithPaginationAsync(
+           int pageIndex = 1,
+           int pageSize = 10,
            Expression<Func<TEntity, bool>> filter = null,
            Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderBy = null,
-           string includeProperties = "")
+           string includeProperties = "",
+           bool isDelete = false)
         {
             IQueryable<TEntity> query = _dbSet;
 
-            if (filter != null)
+            if (!isDelete)
+            {
+                query = query.Where(e => !e.IsDelete);
+            }
+
+            if (filter is not null)
             {
                 query = query.Where(filter);
             }
@@ -37,20 +45,50 @@ namespace Project.Infrastructure.Common
                 query = query.Include(includeProperty);
             }
 
-            if (orderBy != null)
+            return orderBy is not null
+                ? await orderBy(query)
+                    .Skip((pageIndex - 1) * pageSize)
+                    .Take(pageSize)
+                    .AsNoTracking().ToListAsync()
+                : (IEnumerable<TEntity>)await query
+                    .Skip((pageIndex - 1) * pageSize)
+                    .Take(pageSize)
+                    .AsNoTracking().ToListAsync();
+        }
+
+        public virtual async Task<IEnumerable<TEntity>> GetAllAsync(
+           Expression<Func<TEntity, bool>> filter = null,
+           Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderBy = null,
+           string includeProperties = "",
+           bool isDelete = false)
+        {
+            IQueryable<TEntity> query = _dbSet;
+
+            if (!isDelete)
             {
-                return await orderBy(query).AsNoTracking().ToListAsync();
+                query = query.Where(e => !e.IsDelete);
             }
-            else
+
+            if (filter is not null)
             {
-                return await query.AsNoTracking().ToListAsync();
+                query = query.Where(filter);
             }
+
+            foreach (string includeProperty in includeProperties.Split
+                (new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
+            {
+                query = query.Include(includeProperty);
+            }
+
+            return orderBy is not null
+                ? await orderBy(query)
+                    .AsNoTracking().ToListAsync()
+                : (IEnumerable<TEntity>)await query
+                    .AsNoTracking().ToListAsync();
         }
 
         public virtual async Task<TEntity> GetByIdAsync(object id)
-        {
-            return await _dbSet.AsNoTracking().FirstOrDefaultAsync(e => e.Id.Equals(id));
-        }
+            => await _dbSet.AsNoTracking().FirstOrDefaultAsync(e => e.Id == id);
 
         public virtual Task InsertAsync(TEntity entity)
         {
@@ -60,8 +98,8 @@ namespace Project.Infrastructure.Common
 
         public virtual async Task DeleteAsync(object id)
         {
-            TEntity entityToDelete = await GetByIdAsync(id);
-            if (entityToDelete == null)
+            var entityToDelete = await GetByIdAsync(id);
+            if (entityToDelete is null)
             {
                 throw new ArgumentNullException(nameof(id));
             }
@@ -70,8 +108,8 @@ namespace Project.Infrastructure.Common
 
         public virtual async Task HardDeleteAsync(object id)
         {
-            TEntity entityToDelete = await GetByIdAsync(id);
-            if (entityToDelete == null)
+            var entityToDelete = await GetByIdAsync(id);
+            if (entityToDelete is null)
             {
                 throw new ArgumentNullException(nameof(id));
             }
