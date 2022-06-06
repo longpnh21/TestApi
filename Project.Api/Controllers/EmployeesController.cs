@@ -37,51 +37,34 @@ namespace Project.Api.Controllers
 
                 if (!string.IsNullOrWhiteSpace(searchValue))
                 {
-                    filter = e => e.Id.ToString().Equals(searchValue)
-                            || e.FirstName.Contains(searchValue)
-                            || e.LastName.Contains(searchValue)
-                            || e.Phone.Contains(searchValue)
-                            || e.Email.Contains(searchValue);
+                    searchValue = searchValue.ToUpper();
+                    filter = e => e.Id.Contains(searchValue)
+                            || e.FirstName.ToUpper().Contains(searchValue)
+                            || e.LastName.ToUpper().Contains(searchValue)
+                            || e.Phone.ToUpper().Contains(searchValue)
+                            || e.Email.ToUpper().Contains(searchValue);
                 }
+
                 if (!string.IsNullOrWhiteSpace(orderBy))
                 {
-                    switch (orderBy)
+                    order = orderBy switch
                     {
-                        case "id_desc":
-                            order = x => x.OrderByDescending(e => e.Id);
-                            break;
-                        case "firstName":
-                            order = x => x.OrderBy(e => e.FirstName);
-                            break;
-                        case "firstName_desc":
-                            order = x => x.OrderByDescending(e => e.FirstName);
-                            break;
-                        case "lastName":
-                            order = x => x.OrderBy(e => e.LastName);
-                            break;
-                        case "lastName_desc":
-                            order = x => x.OrderByDescending(e => e.LastName);
-                            break;
-                        case "phone":
-                            order = x => x.OrderBy(e => e.Phone);
-                            break;
-                        case "phone_desc":
-                            order = x => x.OrderByDescending(e => e.Phone);
-                            break;
-                        case "dob":
-                            order = x => x.OrderBy(e => e.DateOfBirth);
-                            break;
-                        case "dob_desc":
-                            order = x => x.OrderByDescending(e => e.DateOfBirth);
-                            break;
-                        default:
-                            order = x => x.OrderBy(e => e.Id);
-                            break;
-                    }
+                        "id_desc" => x => x.OrderByDescending(e => e.Id),
+                        "firstName" => x => x.OrderBy(e => e.FirstName),
+                        "firstName_desc" => x => x.OrderByDescending(e => e.FirstName),
+                        "lastName" => x => x.OrderBy(e => e.LastName),
+                        "lastName_desc" => x => x.OrderByDescending(e => e.LastName),
+                        "phone" => x => x.OrderBy(e => e.Phone),
+                        "phone_desc" => x => x.OrderByDescending(e => e.Phone),
+                        "dob" => x => x.OrderBy(e => e.DateOfBirth),
+                        "dob_desc" => x => x.OrderByDescending(e => e.DateOfBirth),
+                        _ => x => x.OrderBy(e => e.Id),
+                    };
                 }
 
                 var employees = await _employeeService.GetAsync(pageIndex, pageSize, filter: filter, orderBy: order, include, isDelete);
-                return Ok(employees.Select(e => _mapper.Map<EmployeeDto>(e)));
+                employees.Result.Select(e => _mapper.Map<EmployeeDto>(e));
+                return Ok(employees);
             }
             catch (Exception ex)
             {
@@ -151,7 +134,7 @@ namespace Project.Api.Controllers
                 if (string.IsNullOrWhiteSpace(id)
                     || !Guid.TryParse(id, out _)
                     || !ModelState.IsValid
-                    || !(id == (dto.Id)))
+                    || !(id == dto.Id))
                 {
                     return BadRequest();
                 }

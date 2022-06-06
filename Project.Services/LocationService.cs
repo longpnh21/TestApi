@@ -1,7 +1,7 @@
-﻿using Project.Core.Entities;
+﻿using Project.Core.Common;
+using Project.Core.Entities;
 using Project.Infrastructure.Common;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
@@ -12,10 +12,7 @@ namespace Project.Services
     {
         private readonly IUnitOfWork _unitOfWork;
 
-        public LocationService(IUnitOfWork unitOfWork)
-        {
-            _unitOfWork = unitOfWork;
-        }
+        public LocationService(IUnitOfWork unitOfWork) => _unitOfWork = unitOfWork;
 
         public async Task AddAsync(Location location)
         {
@@ -38,27 +35,21 @@ namespace Project.Services
             _unitOfWork.Dispose();
         }
 
-        public async Task<IEnumerable<Location>> GetAllAsync(
+        public async Task<PaginatedList<Location>> GetAllAsync(
            int pageIndex = 1,
            int pageSize = 10,
            Expression<Func<Location, bool>> filter = null,
            Func<IQueryable<Location>, IOrderedQueryable<Location>> orderBy = null,
            string includeProperties = "",
-           bool isDelete = false)
-        {
-            return await _unitOfWork.LocationRepository.GetWithPaginationAsync(
+           bool isDelete = false) => await _unitOfWork.LocationRepository.GetWithPaginationAsync(
                 pageIndex,
                 pageSize,
                 filter,
                 orderBy,
                 includeProperties,
                 isDelete);
-        }
 
-        public async Task<Location> GetByIdAsync(int id)
-        {
-            return await _unitOfWork.LocationRepository.GetByIdAsync(id);
-        }
+        public async Task<Location> GetByIdAsync(int id) => await _unitOfWork.LocationRepository.GetByIdAsync(id);
 
         public async Task UpdateAsync(Location location)
         {

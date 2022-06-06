@@ -8,17 +8,15 @@ namespace Project.Infrastructure.Repositories
 {
     public class LostPropertyRepository : BaseRepository<LostProperty>, ILostPropertyRepository
     {
-        public LostPropertyRepository(IApplicationDbContext context) : base(context)
-        {
-            _dbSet = context.LostProperties;
-        }
+        public LostPropertyRepository(IApplicationDbContext context) : base(context) => _dbSet = context.LostProperties;
 
-        public virtual async Task HardDeleteAsync(IEnumerable<LostProperty> entitiesToDelete)
+        public virtual Task HardDeleteAsync(IEnumerable<LostProperty> entitiesToDelete)
         {
             foreach (var entity in entitiesToDelete)
             {
                 _dbSet.Remove(entity);
             }
+            return Task.CompletedTask;
         }
 
         public override async Task InsertAsync(LostProperty entity)

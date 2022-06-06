@@ -43,31 +43,19 @@ namespace Project.Api.Controllers
                 }
                 if (!string.IsNullOrWhiteSpace(orderBy))
                 {
-                    switch (orderBy)
+                    order = orderBy switch
                     {
-                        case "id_desc":
-                            order = x => x.OrderByDescending(e => e.Id);
-                            break;
-                        case "floor":
-                            order = x => x.OrderBy(e => e.Floor);
-                            break;
-                        case "floor_desc":
-                            order = x => x.OrderByDescending(e => e.Floor);
-                            break;
-                        case "cube":
-                            order = x => x.OrderBy(e => e.Cube);
-                            break;
-                        case "cube_desc":
-                            order = x => x.OrderByDescending(e => e.Cube);
-                            break;
-                        default:
-                            order = x => x.OrderBy(e => e.Id);
-                            break;
-                    }
+                        "id_desc" => x => x.OrderByDescending(e => e.Id),
+                        "floor" => x => x.OrderBy(e => e.Floor),
+                        "floor_desc" => x => x.OrderByDescending(e => e.Floor),
+                        "cube" => x => x.OrderBy(e => e.Cube),
+                        "cube_desc" => x => x.OrderByDescending(e => e.Cube),
+                        _ => x => x.OrderBy(e => e.Id),
+                    };
                 }
 
                 var locations = await _locationService.GetAllAsync(pageIndex, pageSize, filter: filter, orderBy: order, include, isDelete);
-                return Ok(locations.Select(e => _mapper.Map<LocationDto>(e)));
+                return Ok(locations.Result.Select(e => _mapper.Map<LocationDto>(e)));
             }
             catch (Exception ex)
             {

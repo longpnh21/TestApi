@@ -1,6 +1,5 @@
 ﻿using Project.Core.Common;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
@@ -9,7 +8,7 @@ namespace Project.Infrastructure.Common
 {
     public interface IRepository<TEntity> where TEntity : BaseEntity
     {
-        Task<IEnumerable<TEntity>> GetWithPaginationAsync(
+        Task<PaginatedList<TEntity>> GetWithPaginationAsync(
            int pageIndex = 1,
            int pageSize = 10,
            Expression<Func<TEntity, bool>> filter = null,
@@ -17,7 +16,7 @@ namespace Project.Infrastructure.Common
            string includeProperties = "",
            bool isDelete = false);
 
-        Task<IEnumerable<TEntity>> GetAllAsync(
+        Task<PaginatedList<TEntity>> GetAllAsync(
            Expression<Func<TEntity, bool>> filter = null,
            Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderBy = null,
            string includeProperties = "",

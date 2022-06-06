@@ -1,6 +1,6 @@
-﻿using Project.Core.Entities;
+﻿using Project.Core.Common;
+using Project.Core.Entities;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
@@ -11,7 +11,7 @@ namespace Project.Services
     {
         Task AddAsync(LostProperty lostProperty);
         Task DeleteAsync(int id);
-        Task<IEnumerable<LostProperty>> GetAllAsync(
+        Task<PaginatedList<LostProperty>> GetAllAsync(
            int pageIndex = 1,
            int pageSize = 10,
            Expression<Func<LostProperty, bool>> filter = null,

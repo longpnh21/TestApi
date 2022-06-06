@@ -1,7 +1,7 @@
-﻿using Project.Core.Entities;
+﻿using Project.Core.Common;
+using Project.Core.Entities;
 using Project.Infrastructure.Common;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
@@ -12,10 +12,7 @@ namespace Project.Services
     {
         private readonly IUnitOfWork _unitOfWork;
 
-        public EmployeeService(IUnitOfWork unitOfWork)
-        {
-            _unitOfWork = unitOfWork;
-        }
+        public EmployeeService(IUnitOfWork unitOfWork) => _unitOfWork = unitOfWork;
 
         public async Task AddAsync(Employee employee)
         {
@@ -36,34 +33,28 @@ namespace Project.Services
             var employeeLostProperties = await _unitOfWork.LostPropertyRepository.GetAllAsync(filter: e => e.EmployeeId == id);
             if (employeeLostProperties is not null)
             {
-                await _unitOfWork.LostPropertyRepository.HardDeleteAsync(employeeLostProperties);
+                await _unitOfWork.LostPropertyRepository.HardDeleteAsync(employeeLostProperties.Result);
             }
             await _unitOfWork.EmployeeRepository.HardDeleteAsync(id);
             await _unitOfWork.SaveAsync();
             _unitOfWork.Dispose();
         }
 
-        public async Task<IEnumerable<Employee>> GetAsync(
+        public async Task<PaginatedList<Employee>> GetAsync(
            int pageIndex = 1,
            int pageSize = 10,
            Expression<Func<Employee, bool>> filter = null,
            Func<IQueryable<Employee>, IOrderedQueryable<Employee>> orderBy = null,
            string includeProperties = "",
-           bool isDelete = false)
-        {
-            return await _unitOfWork.EmployeeRepository.GetWithPaginationAsync(
+           bool isDelete = false) => await _unitOfWork.EmployeeRepository.GetWithPaginationAsync(
                 pageIndex,
                 pageSize,
                 filter,
                 orderBy,
                 includeProperties,
                 isDelete);
-        }
 
-        public async Task<Employee> GetByIdAsync(string id)
-        {
-            return await _unitOfWork.EmployeeRepository.GetByIdAsync(id);
-        }
+        public async Task<Employee> GetByIdAsync(string id) => await _unitOfWork.EmployeeRepository.GetByIdAsync(id);
 
         public async Task UpdateAsync(Employee employee)
         {

@@ -1,11 +1,12 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Moq;
 using NUnit.Framework;
+using Project.Core.Common;
 using Project.Core.Entities;
 using Project.Infrastructure.Common;
 using Project.Infrastructure.Repositories;
 using Project.Services;
-using Project.Test.TestHelpers;
+using Project.Tests.TestHelpers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -27,10 +28,7 @@ namespace Project.Tests.ServicesTests
 
         #region Test fixture setup
         [OneTimeSetUp]
-        public void SetUp()
-        {
-            _locations = DataInitializer.GetAllLocations();
-        }
+        public void SetUp() => _locations = DataInitializer.GetAllLocations();
         #endregion
 
         #region Setup
@@ -53,7 +51,7 @@ namespace Project.Tests.ServicesTests
         public async Task GetAllAsync_ReturnCollection(int pageIndex, int pageSize)
         {
             var locations = await _locationService.GetAllAsync(pageIndex, pageSize);
-            CollectionAssert.AreEqual(locations, _locations.Skip((pageIndex - 1) * pageSize).Take(pageSize));
+            CollectionAssert.AreEqual(locations.Result, _locations.Skip((pageIndex - 1) * pageSize).Take(pageSize));
         }
 
         [Test]
@@ -71,7 +69,6 @@ namespace Project.Tests.ServicesTests
             var location = await _locationService.GetByIdAsync(id);
             Assert.Null(location);
         }
-
 
         [Test]
         public async Task AddAsync()
@@ -132,7 +129,6 @@ namespace Project.Tests.ServicesTests
 
         #region Private member methods
 
-
         private ILocationRepository SetUpLocationRepository()
         {
             var mockRepo = new Mock<LocationRepository>(MockBehavior.Default, _applicationDbContext);
@@ -172,19 +168,15 @@ namespace Project.Tests.ServicesTests
                         }
 
                         return orderBy is not null
-                            ? orderBy(query)
-                                .Skip((pageIndex - 1) * pageSize)
-                                .Take(pageSize)
-                            : (IEnumerable<Location>)query
-                                .Skip((pageIndex - 1) * pageSize)
-                                .Take(pageSize);
+                            ? new PaginatedList<Location>(orderBy(query), query.Count(), pageIndex, pageSize)
+                            : new PaginatedList<Location>(query, query.Count(), pageIndex, pageSize);
                     }
                 );
 
             mockRepo.Setup(x => x.GetByIdAsync(It.IsAny<int>()))
                 .ReturnsAsync(new Func<int, Location>(id => _locations.FirstOrDefault(e => e.Id == id)));
 
-            mockRepo.Setup(p => p.InsertAsync((It.IsAny<Location>())))
+            mockRepo.Setup(p => p.InsertAsync(It.IsAny<Location>()))
                 .Callback(new Action<Location>(newLocation =>
                 {
                     int locationId = _locations.Max(e => e.Id);
@@ -209,7 +201,6 @@ namespace Project.Tests.ServicesTests
                         locationToRemove.IsDelete = true;
                     }
                 });
-
 
             mockRepo.Setup(x => x.DeleteAsync(It.IsAny<Location>()))
                 .Callback(new Action<Location>(emp =>
@@ -263,10 +254,7 @@ namespace Project.Tests.ServicesTests
 
         #region TestFixture TearDown
         [OneTimeTearDown]
-        public void DisposeAllObjects()
-        {
-            _locations = null;
-        }
+        public void DisposeAllObjects() => _locations = null;
         #endregion
     }
 }

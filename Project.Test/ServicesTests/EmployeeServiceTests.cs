@@ -1,11 +1,12 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Moq;
 using NUnit.Framework;
+using Project.Core.Common;
 using Project.Core.Entities;
 using Project.Infrastructure.Common;
 using Project.Infrastructure.Repositories;
 using Project.Services;
-using Project.Test.TestHelpers;
+using Project.Tests.TestHelpers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -59,7 +60,7 @@ namespace Project.Tests.ServicesTests
         public async Task GetAllAsync_ReturnCollection(int pageIndex, int pageSize)
         {
             var employees = await _employeeService.GetAsync(pageIndex, pageSize);
-            CollectionAssert.AreEqual(employees, _employees.Skip((pageIndex - 1) * pageSize).Take(pageSize));
+            CollectionAssert.AreEqual(employees.Result, _employees.Skip((pageIndex - 1) * pageSize).Take(pageSize));
         }
 
         [Test]
@@ -77,7 +78,6 @@ namespace Project.Tests.ServicesTests
             var employee = await _employeeService.GetByIdAsync(id);
             Assert.Null(employee);
         }
-
 
         [Test]
         public async Task AddAsync()
@@ -184,11 +184,10 @@ namespace Project.Tests.ServicesTests
                         }
 
                         return orderBy is not null
-                            ? orderBy(query)
-                            : (IEnumerable<LostProperty>)query;
+                            ? new PaginatedList<LostProperty>(orderBy(query), query.Count())
+                            : new PaginatedList<LostProperty>(query, query.Count());
                     }
                 );
-
 
             mockRepo.Setup(x => x.HardDeleteAsync(It.IsAny<IEnumerable<LostProperty>>()))
                 .Callback(new Action<IEnumerable<LostProperty>>(propertiesToDelete =>
@@ -242,19 +241,15 @@ namespace Project.Tests.ServicesTests
                         }
 
                         return orderBy is not null
-                            ? orderBy(query)
-                                .Skip((pageIndex - 1) * pageSize)
-                                .Take(pageSize).ToList()
-                            : (IEnumerable<Employee>)query
-                                .Skip((pageIndex - 1) * pageSize)
-                                .Take(pageSize).ToList();
+                            ? new PaginatedList<Employee>(orderBy(query), query.Count(), pageIndex, pageSize)
+                            : new PaginatedList<Employee>(query, query.Count(), pageIndex, pageSize);
                     }
                 );
 
             mockRepo.Setup(x => x.GetByIdAsync(It.IsAny<string>()))
                 .ReturnsAsync(new Func<string, Employee>(id => _employees.FirstOrDefault(e => e.Id == id)));
 
-            mockRepo.Setup(p => p.InsertAsync((It.IsAny<Employee>())))
+            mockRepo.Setup(p => p.InsertAsync(It.IsAny<Employee>()))
                 .Callback(new Action<Employee>(newEmployee =>
                 {
                     string employeeId = Guid.NewGuid().ToString();
@@ -279,7 +274,6 @@ namespace Project.Tests.ServicesTests
                         employeeToRemove.IsDelete = true;
                     }
                 });
-
 
             mockRepo.Setup(x => x.DeleteAsync(It.IsAny<Employee>()))
                 .Callback(new Action<Employee>(emp =>

@@ -1,7 +1,7 @@
-﻿using Project.Core.Entities;
+﻿using Project.Core.Common;
+using Project.Core.Entities;
 using Project.Infrastructure.Common;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
@@ -12,10 +12,7 @@ namespace Project.Services
     {
         private readonly IUnitOfWork _unitOfWork;
 
-        public LostPropertyService(IUnitOfWork unitOfWork)
-        {
-            _unitOfWork = unitOfWork;
-        }
+        public LostPropertyService(IUnitOfWork unitOfWork) => _unitOfWork = unitOfWork;
 
         public async Task AddAsync(LostProperty lostProperty)
         {
@@ -54,27 +51,21 @@ namespace Project.Services
             _unitOfWork.Dispose();
         }
 
-        public async Task<IEnumerable<LostProperty>> GetAllAsync(
+        public async Task<PaginatedList<LostProperty>> GetAllAsync(
            int pageIndex = 1,
            int pageSize = 10,
            Expression<Func<LostProperty, bool>> filter = null,
            Func<IQueryable<LostProperty>, IOrderedQueryable<LostProperty>> orderBy = null,
            string includeProperties = "",
-           bool isDelete = false)
-        {
-            return await _unitOfWork.LostPropertyRepository.GetWithPaginationAsync(
+           bool isDelete = false) => await _unitOfWork.LostPropertyRepository.GetWithPaginationAsync(
                 pageIndex,
                 pageSize,
                 filter,
                 orderBy,
                 includeProperties,
                 isDelete);
-        }
 
-        public async Task<LostProperty> GetByIdAsync(int id)
-        {
-            return await _unitOfWork.LostPropertyRepository.GetByIdAsync(id);
-        }
+        public async Task<LostProperty> GetByIdAsync(int id) => await _unitOfWork.LostPropertyRepository.GetByIdAsync(id);
 
         public async Task UpdateAsync(LostProperty lostProperty)
         {

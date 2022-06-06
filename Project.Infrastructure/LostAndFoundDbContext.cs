@@ -20,15 +20,9 @@ namespace Project.Infrastructure
         public DbSet<LostProperty> LostProperties { get; set; }
         public DbSet<Location> Locations { get; set; }
 
-        public void MarkAsModified(object item)
-        {
-            Entry(item).State = EntityState.Modified;
-        }
+        public void MarkAsModified(object item) => Entry(item).State = EntityState.Modified;
 
-        public bool IsEntityDetached(object item)
-        {
-            return Entry(item).State == EntityState.Detached;
-        }
+        public bool IsEntityDetached(object item) => Entry(item).State == EntityState.Detached;
 
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = new CancellationToken())
         {
@@ -63,6 +57,5 @@ namespace Project.Infrastructure
             int result = await base.SaveChangesAsync(cancellationToken);
             return result;
         }
-
     }
 }

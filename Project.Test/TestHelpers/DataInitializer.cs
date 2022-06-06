@@ -3,7 +3,7 @@ using Project.Core.Entities;
 using System;
 using System.Collections.Generic;
 
-namespace Project.Test.TestHelpers
+namespace Project.Tests.TestHelpers
 {
     public class DataInitializer
     {

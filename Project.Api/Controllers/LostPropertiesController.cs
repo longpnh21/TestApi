@@ -47,55 +47,27 @@ namespace Project.Api.Controllers
                 }
                 if (!string.IsNullOrWhiteSpace(orderBy))
                 {
-                    switch (orderBy)
+                    order = orderBy switch
                     {
-                        case "id_desc":
-                            order = x => x.OrderByDescending(e => e.Id);
-                            break;
-                        case "name":
-                            order = x => x.OrderBy(e => e.Name);
-                            break;
-                        case "name_desc":
-                            order = x => x.OrderByDescending(e => e.Name);
-                            break;
-                        case "description":
-                            order = x => x.OrderBy(e => e.Description);
-                            break;
-                        case "description_desc":
-                            order = x => x.OrderByDescending(e => e.Description);
-                            break;
-                        case "status":
-                            order = x => x.OrderBy(e => e.Status);
-                            break;
-                        case "status_desc":
-                            order = x => x.OrderByDescending(e => e.Status);
-                            break;
-                        case "employeeId":
-                            order = x => x.OrderBy(e => e.EmployeeId);
-                            break;
-                        case "employeeId_desc":
-                            order = x => x.OrderByDescending(e => e.EmployeeId);
-                            break;
-                        case "locationId":
-                            order = x => x.OrderBy(e => e.LocationId);
-                            break;
-                        case "locationId_desc":
-                            order = x => x.OrderByDescending(e => e.LocationId);
-                            break;
-                        case "foundTime":
-                            order = x => x.OrderBy(e => e.FoundTime);
-                            break;
-                        case "foundTime_desc":
-                            order = x => x.OrderByDescending(e => e.LocationId);
-                            break;
-                        default:
-                            order = x => x.OrderBy(e => e.Id);
-                            break;
-                    }
+                        "id_desc" => x => x.OrderByDescending(e => e.Id),
+                        "name" => x => x.OrderBy(e => e.Name),
+                        "name_desc" => x => x.OrderByDescending(e => e.Name),
+                        "description" => x => x.OrderBy(e => e.Description),
+                        "description_desc" => x => x.OrderByDescending(e => e.Description),
+                        "status" => x => x.OrderBy(e => e.Status),
+                        "status_desc" => x => x.OrderByDescending(e => e.Status),
+                        "employeeId" => x => x.OrderBy(e => e.EmployeeId),
+                        "employeeId_desc" => x => x.OrderByDescending(e => e.EmployeeId),
+                        "locationId" => x => x.OrderBy(e => e.LocationId),
+                        "locationId_desc" => x => x.OrderByDescending(e => e.LocationId),
+                        "foundTime" => x => x.OrderBy(e => e.FoundTime),
+                        "foundTime_desc" => x => x.OrderByDescending(e => e.LocationId),
+                        _ => x => x.OrderBy(e => e.Id),
+                    };
                 }
 
                 var lostProperties = await _lostPropertyService.GetAllAsync(pageIndex, pageSize, filter: filter, orderBy: order, include, isDelete);
-                return Ok(lostProperties.Select(e => _mapper.Map<LostPropertyDto>(e)));
+                return Ok(lostProperties.Result.Select(e => _mapper.Map<LostPropertyDto>(e)));
             }
             catch (Exception ex)
             {

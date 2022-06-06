@@ -14,12 +14,9 @@ namespace Project.Infrastructure.Common
         protected IApplicationDbContext _context;
         protected DbSet<TEntity> _dbSet;
 
-        public BaseRepository(IApplicationDbContext context)
-        {
-            _context = context;
-        }
+        public BaseRepository(IApplicationDbContext context) => _context = context;
 
-        public virtual async Task<IEnumerable<TEntity>> GetWithPaginationAsync(
+        public virtual async Task<PaginatedList<TEntity>> GetWithPaginationAsync(
            int pageIndex = 1,
            int pageSize = 10,
            Expression<Func<TEntity, bool>> filter = null,
@@ -45,18 +42,23 @@ namespace Project.Infrastructure.Common
                 query = query.Include(includeProperty);
             }
 
-            return orderBy is not null
+            int count = await query.CountAsync();
+
+            var result = orderBy is not null
                 ? await orderBy(query)
+                    .AsNoTracking()
                     .Skip((pageIndex - 1) * pageSize)
-                    .Take(pageSize)
-                    .AsNoTracking().ToListAsync()
+                    .Take(pageSize).ToListAsync()
                 : (IEnumerable<TEntity>)await query
+                    .AsNoTracking()
                     .Skip((pageIndex - 1) * pageSize)
                     .Take(pageSize)
-                    .AsNoTracking().ToListAsync();
+                    .ToListAsync();
+
+            return new PaginatedList<TEntity>(result, count, pageIndex, pageSize);
         }
 
-        public virtual async Task<IEnumerable<TEntity>> GetAllAsync(
+        public virtual async Task<PaginatedList<TEntity>> GetAllAsync(
            Expression<Func<TEntity, bool>> filter = null,
            Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderBy = null,
            string includeProperties = "",
@@ -80,11 +82,17 @@ namespace Project.Infrastructure.Common
                 query = query.Include(includeProperty);
             }
 
-            return orderBy is not null
+            int count = await query.CountAsync();
+
+            var result = orderBy is not null
                 ? await orderBy(query)
-                    .AsNoTracking().ToListAsync()
+                    .AsNoTracking()
+                    .ToListAsync()
                 : (IEnumerable<TEntity>)await query
-                    .AsNoTracking().ToListAsync();
+                    .AsNoTracking()
+                    .ToListAsync();
+
+            return new PaginatedList<TEntity>(result, count);
         }
 
         public virtual async Task<TEntity> GetByIdAsync(object id)

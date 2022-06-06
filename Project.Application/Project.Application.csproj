@@ -12,4 +12,8 @@
     <ProjectReference Include="..\Project.Core\Project.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Response\" />
+  </ItemGroup>
+
 </Project>

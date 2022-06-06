@@ -6,9 +6,10 @@ using NUnit.Framework;
 using Project.Api.Controllers;
 using Project.Application.AutoMapper;
 using Project.Application.Dtos.Employee;
+using Project.Core.Common;
 using Project.Core.Entities;
 using Project.Services;
-using Project.Test.TestHelpers;
+using Project.Tests.TestHelpers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -105,16 +106,23 @@ namespace Project.Tests.ControllersTests
                 It.IsAny<int>(),
                 It.IsAny<Expression<Func<Employee, bool>>>(),
                 It.IsAny<Func<IQueryable<Employee>, IOrderedQueryable<Employee>>>(),
-                It.IsAny<string>()))
+                It.IsAny<string>(),
+                It.IsAny<bool>()))
                 .ReturnsAsync(
                     (int pageIndex,
                     int pageSize,
                     Expression<Func<Employee, bool>> filter,
                     Func<IQueryable<Employee>, IOrderedQueryable<Employee>> orderBy,
-                    string includeProperties
+                    string includeProperties,
+                    bool isDelete
                     ) =>
                     {
                         var query = _employees.AsQueryable();
+
+                        if (!isDelete)
+                        {
+                            query = query.Where(e => !e.IsDelete);
+                        }
 
                         if (filter is not null)
                         {
@@ -128,22 +136,15 @@ namespace Project.Tests.ControllersTests
                         }
 
                         return orderBy is not null
-                            ? orderBy(query)
-                                .Skip((pageIndex - 1) * pageSize)
-                                .Take(pageSize).ToList()
-                            : (IEnumerable<Employee>)query
-                                .Skip((pageIndex - 1) * pageSize)
-                                .Take(pageSize).ToList();
+                            ? new PaginatedList<Employee>(orderBy(query), query.Count(), pageIndex, pageSize)
+                            : new PaginatedList<Employee>(query, query.Count(), pageIndex, pageSize);
                     }
                 );
 
             return mockService.Object;
         }
 
-        private IMapper SetupAutoMapper()
-        {
-            return new MapperConfiguration(cfg => cfg.AddProfile<ApplicationProfile>()).CreateMapper();
-        }
+        private IMapper SetupAutoMapper() => new MapperConfiguration(cfg => cfg.AddProfile<ApplicationProfile>()).CreateMapper();
         #endregion
 
         #region Unit tests
@@ -153,10 +154,10 @@ namespace Project.Tests.ControllersTests
         {
 
             var response = await _employeesController.GetAsync(pageIndex, pageSize) as OkObjectResult;
-            var responseObject = response.Value as IEnumerable<EmployeeDto>;
+            var responseObject = response.Value as PaginatedList<EmployeeDto>;
             var expected = _employees.Skip((pageIndex - 1) * pageSize).Take(pageSize).Select(e => _mapper.Map<EmployeeDto>(e)).ToList();
             Assert.AreEqual(200, response.StatusCode);
-            Assert.AreEqual(expected.Count, responseObject.ToList().Count);
+            Assert.AreEqual(expected.Count, responseObject.Result.Count);
         }
 
         [Test]

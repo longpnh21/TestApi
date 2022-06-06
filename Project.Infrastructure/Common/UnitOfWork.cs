@@ -11,10 +11,7 @@ namespace Project.Infrastructure.Common
         private ILostPropertyRepository _lostPropertyRepository;
         private ILocationRepository _locationRepository;
 
-        public UnitOfWork(IApplicationDbContext context)
-        {
-            _context = context;
-        }
+        public UnitOfWork(IApplicationDbContext context) => _context = context;
 
         public IEmployeeRepository EmployeeRepository
         {
@@ -55,10 +52,7 @@ namespace Project.Infrastructure.Common
             }
         }
 
-        public async Task SaveAsync()
-        {
-            await _context.SaveChangesAsync();
-        }
+        public async Task SaveAsync() => await _context.SaveChangesAsync();
 
         private bool disposed = false;
 

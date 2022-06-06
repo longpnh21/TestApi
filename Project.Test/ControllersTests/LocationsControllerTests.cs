@@ -6,9 +6,10 @@ using NUnit.Framework;
 using Project.Api.Controllers;
 using Project.Application.AutoMapper;
 using Project.Application.Dtos.Location;
+using Project.Core.Common;
 using Project.Core.Entities;
 using Project.Services;
-using Project.Test.TestHelpers;
+using Project.Tests.TestHelpers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -42,10 +43,7 @@ namespace Project.Tests.ControllersTests
 
         #region Setup
         [OneTimeSetUp]
-        public void ReInitializeTest()
-        {
-            _locations = DataInitializer.GetAllLocations();
-        }
+        public void ReInitializeTest() => _locations = DataInitializer.GetAllLocations();
         #endregion
 
         #region Private member methods
@@ -103,16 +101,23 @@ namespace Project.Tests.ControllersTests
                 It.IsAny<int>(),
                 It.IsAny<Expression<Func<Location, bool>>>(),
                 It.IsAny<Func<IQueryable<Location>, IOrderedQueryable<Location>>>(),
-                It.IsAny<string>()))
+                It.IsAny<string>(),
+                It.IsAny<bool>()))
                 .ReturnsAsync(
                     (int pageIndex,
                     int pageSize,
                     Expression<Func<Location, bool>> filter,
                     Func<IQueryable<Location>, IOrderedQueryable<Location>> orderBy,
-                    string includeProperties
+                    string includeProperties,
+                    bool isDelete
                     ) =>
                     {
                         var query = _locations.AsQueryable();
+
+                        if (!isDelete)
+                        {
+                            query = query.Where(e => !e.IsDelete);
+                        }
 
                         if (filter is not null)
                         {
@@ -124,24 +129,16 @@ namespace Project.Tests.ControllersTests
                         {
                             query = query.Include(includeProperty);
                         }
-
                         return orderBy is not null
-                            ? orderBy(query)
-                                .Skip((pageIndex - 1) * pageSize)
-                                .Take(pageSize).ToList()
-                            : (IEnumerable<Location>)query
-                                .Skip((pageIndex - 1) * pageSize)
-                                .Take(pageSize).ToList();
+                            ? new PaginatedList<Location>(orderBy(query), query.Count(), pageIndex, pageSize)
+                            : new PaginatedList<Location>(query, query.Count(), pageIndex, pageSize);
                     }
                 );
 
             return mockService.Object;
         }
 
-        private IMapper SetupAutoMapper()
-        {
-            return new MapperConfiguration(cfg => cfg.AddProfile<ApplicationProfile>()).CreateMapper();
-        }
+        private IMapper SetupAutoMapper() => new MapperConfiguration(cfg => cfg.AddProfile<ApplicationProfile>()).CreateMapper();
         #endregion
 
         #region Unit tests
@@ -151,10 +148,10 @@ namespace Project.Tests.ControllersTests
         {
 
             var response = await _locationsController.GetAsync(pageIndex, pageSize) as OkObjectResult;
-            var responseObject = response.Value as IEnumerable<LocationDto>;
+            var responseObject = response.Value as PaginatedList<LocationDto>;
             var expected = _locations.Skip((pageIndex - 1) * pageSize).Take(pageSize).Select(e => _mapper.Map<LocationDto>(e)).ToList();
             Assert.AreEqual(200, response.StatusCode);
-            Assert.AreEqual(expected.Count, responseObject.ToList().Count);
+            Assert.AreEqual(expected.Count, responseObject.Result.Count);
         }
 
         [Test]
